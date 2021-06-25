@@ -32,7 +32,7 @@ define oradb::database(
   $asmDiskgroup             = 'DATA',
   $recoveryDiskgroup        = undef,
 ){
-  if (!( $version in ['11.2','12.1'])) {
+  if (!( $version in ['11.2','12.1','19.3'])) {
     fail('Unrecognized version')
   }
 

@@ -29,16 +29,16 @@ define oradb::installdb(
 )
 {
 
-  if (!( $version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4'])){
-    fail('Unrecognized database install version, use 11.2.0.1|11.2.0.3|11.2.0.4|12.1.0.1|12.1.0.1')
+  if (!( $version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4','19.0.0.0'])){
+    fail('Unrecognized database install version, use 11.2.0.1|11.2.0.3|11.2.0.4|12.1.0.1|12.1.0.1|19.0.0.0')
   }
 
   if ( !($::kernel in ['Linux','SunOS'])){
     fail('Unrecognized operating system, please use it on a Linux or SunOS host')
   }
 
-  if ( !($databaseType in ['EE','SE','SEONE'])){
-    fail('Unrecognized database type, please use EE|SE|SEONE')
+  if ( !($databaseType in ['EE','SE','SEONE','SE2'])){
+    fail('Unrecognized database type, please use EE|SE|SEONE|SE2')
   }
 
   # check if the oracle software already exists
@@ -97,6 +97,11 @@ define oradb::installdb(
         $file2 =  "${file}_2of7.zip"
       }
 
+      if ( $version == '19.0.0.0' ) {
+        $file1 = "${file}.zip"
+        $file2 = ""
+      }
+
       if $remoteFile == true {
 
         file { "${downloadDir}/${file1}":
@@ -108,15 +113,17 @@ define oradb::installdb(
           require     => Oradb::Utils::Dbstructure["oracle structure ${version}"],
           before      => Exec["extract ${downloadDir}/${file1}"],
         }
-        # db file 2 installer zip
-        file { "${downloadDir}/${file2}":
-          ensure      => present,
-          source      => "${mountPoint}/${file2}",
-          mode        => '0775',
-          owner       => $user,
-          group       => $group,
-          require     => File["${downloadDir}/${file1}"],
-          before      => Exec["extract ${downloadDir}/${file2}"]
+        # db file 2 installer zip (if exists)
+        if ($file2 != ""){
+          file { "${downloadDir}/${file2}":
+            ensure      => present,
+            source      => "${mountPoint}/${file2}",
+            mode        => '0775',
+            owner       => $user,
+            group       => $group,
+            require     => File["${downloadDir}/${file1}"],
+            before      => Exec["extract ${downloadDir}/${file2}"]
+          }
         }
         $source = $downloadDir
       } else {
@@ -133,15 +140,17 @@ define oradb::installdb(
         require     => Oradb::Utils::Dbstructure["oracle structure ${version}"],
         before      => Exec["install oracle database ${title}"],
       }
-      exec { "extract ${downloadDir}/${file2}":
-        command     => "unzip -o ${source}/${file2} -d ${downloadDir}/${file}",
-        timeout     => 0,
-        logoutput   => false,
-        path        => $execPath,
-        user        => $user,
-        group       => $group,
-        require     => Exec["extract ${downloadDir}/${file1}"],
-        before      => Exec["install oracle database ${title}"],
+      if ($file2 != ""){
+        exec { "extract ${downloadDir}/${file2}":
+          command     => "unzip -o ${source}/${file2} -d ${downloadDir}/${file}",
+          timeout     => 0,
+          logoutput   => false,
+          path        => $execPath,
+          user        => $user,
+          group       => $group,
+          require     => Exec["extract ${downloadDir}/${file1}"],
+          before      => Exec["install oracle database ${title}"],
+        }
       }
     }
 
@@ -161,7 +170,7 @@ define oradb::installdb(
       }
     }
 
-    if ( $version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4']){
+    if ( $version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4','19.0.0.0']){
       exec { "install oracle database ${title}":
         command     => "/bin/sh -c 'unset DISPLAY;${downloadDir}/${file}/database/runInstaller -silent -waitforcompletion -ignoreSysPrereqs -ignorePrereq -responseFile ${downloadDir}/db_install_${version}.rsp'",
         creates     => "${oracleHome}/dbs",
