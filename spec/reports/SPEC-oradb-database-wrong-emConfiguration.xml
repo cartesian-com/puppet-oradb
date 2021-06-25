@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="oradb::database wrong emConfiguration" tests="1" time="0.041437" failures="0" errors="0" skipped="0" timestamp="2014-08-06T20:04:49+02:00">
+  <testcase name="oradb::database wrong emConfiguration should contain File[/install/database_testDb_Create.rsp]" time="0.041146">
+  </testcase>
+</testsuite>

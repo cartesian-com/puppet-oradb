@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="oradb::installasm wrong O.S." tests="1" time="0.057336" failures="0" errors="0" skipped="0" timestamp="2014-08-06T20:04:49+02:00">
+  <testcase name="oradb::installasm wrong O.S. should contain Notify[oradb::installasm /app/grid/product/11.2/grid does not exists]" time="0.057057">
+  </testcase>
+</testsuite>
