@@ -29,8 +29,8 @@ define oradb::installdb(
 )
 {
 
-  if (!( $version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4','19.0.0.0'])){
-    fail('Unrecognized database install version, use 11.2.0.1|11.2.0.3|11.2.0.4|12.1.0.1|12.1.0.1|19.0.0.0')
+  if (!( $version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4','19.3.0.0'])){
+    fail('Unrecognized database install version, use 11.2.0.1|11.2.0.3|11.2.0.4|12.1.0.1|12.1.0.1|19.3.0.0')
   }
 
   if ( !($::kernel in ['Linux','SunOS'])){
@@ -97,7 +97,7 @@ define oradb::installdb(
         $file2 =  "${file}_2of7.zip"
       }
 
-      if ( $version == '19.0.0.0' ) {
+      if ( $version == '19.3.0.0' ) {
         $file1 = "${file}.zip"
         $file2 = ""
       }
@@ -170,7 +170,7 @@ define oradb::installdb(
       }
     }
 
-    if ( $version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4','19.0.0.0']){
+    if ( $version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4','19.3.0.0']){
       exec { "install oracle database ${title}":
         command     => "/bin/sh -c 'unset DISPLAY;${downloadDir}/${file}/database/runInstaller -silent -waitforcompletion -ignoreSysPrereqs -ignorePrereq -responseFile ${downloadDir}/db_install_${version}.rsp'",
         creates     => "${oracleHome}/dbs",

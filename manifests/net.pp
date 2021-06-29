@@ -11,7 +11,7 @@ define oradb::net(
   $group        = 'dba',
   $downloadDir  = '/install',
 ){
-  if $version in ['11.2','12.1'] {
+  if $version in ['11.2','12.1','19.3'] {
   } else {
     fail('Unrecognized version')
   }
