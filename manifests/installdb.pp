@@ -105,7 +105,7 @@ define oradb::installdb(
       if ($remoteFile == true) {
         $source = $downloadDir
 
-        if ($mountPoint =~ /^s3://.*$/ ) {
+        if ($mountPoint =~ /^s3:\/\/.*$/ ) {
           # dowload from S3
           exec { "Download $file1 from $mountPoint":
             command => "/usr/bin/aws s3 cp ${mountPoint}${file1} ${downloadDir}/ && chown ${user}:${group} ${downloadDir}/${file1}",
