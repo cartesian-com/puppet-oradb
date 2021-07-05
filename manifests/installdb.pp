@@ -156,11 +156,11 @@ define oradb::installdb(
 
       if ($version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4']) {
         # 11/12 is extracted to the download dir
-        $unzip1 = "unzip -o ${source}/${file1} -d ${download_dir}/${file}"
+        $unzip1 = "unzip -o ${source}/${file1} -d ${downloadDir}/${file}"
       }
       elsif ($version == '19.3.0.0'){
         # 19c is extracted to the final destination
-        $unzip1 = "unzip -o ${source}/${file1} -d ${oracle_home}"
+        $unzip1 = "unzip -o ${source}/${file1} -d ${oracleHome}"
       }
 
       exec { "extract ${downloadDir}/${file1}":
@@ -205,10 +205,10 @@ define oradb::installdb(
     }
 
     if ($version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4']) {
-      $run_installer_command = "/bin/sh -c 'unset DISPLAY;${download_dir}/${file}/database/runInstaller -silent -waitforcompletion -ignoreSysPrereqs -ignorePrereq -responseFile ${download_dir}/db_install_${version}_${title}.rsp'"
+      $run_installer_command = "/bin/sh -c 'unset DISPLAY;${downloadDir}/${file}/database/runInstaller -silent -waitforcompletion -ignoreSysPrereqs -ignorePrereq -responseFile ${downloadDir}/db_install_${version}_${title}.rsp'"
     }
     elsif ($version == '19.3.0.0'){
-      $run_installer_command = "/bin/sh -c 'unset DISPLAY;cd ${oracle_home};./runInstaller -silent -waitforcompletion -ignorePrereq -responseFile ${download_dir}/db_install_${version}_${title}.rsp'"
+      $run_installer_command = "/bin/sh -c 'unset DISPLAY;cd ${oracleHome};./runInstaller -silent -waitforcompletion -ignorePrereq -responseFile ${downloadDir}/db_install_${version}_${title}.rsp'"
     }
 
     exec { "install oracle database ${title}":
