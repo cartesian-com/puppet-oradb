@@ -102,31 +102,55 @@ define oradb::installdb(
         $file2 = ""
       }
 
-      if $remoteFile == true {
+      if ($remoteFile == true) {
+        $source = $downloadDir
 
-        file { "${downloadDir}/${file1}":
-          ensure      => present,
-          source      => "${mountPoint}/${file1}",
-          mode        => '0775',
-          owner       => $user,
-          group       => $group,
-          require     => Oradb::Utils::Dbstructure["oracle structure ${version}"],
-          before      => Exec["extract ${downloadDir}/${file1}"],
+        if ($mountPoint =~ /^s3://.*$/ ) {
+          # dowload from S3
+          exec { "Download $file1 from $mountPoint":
+            command => "/usr/bin/aws s3 cp ${mountPoint}${file1} ${downloadDir}/ && chown ${user}:${group} ${downloadDir}/${file1}",
+            creates => "${downloadDir}/${file1}",
+            timeout => 0,
+            require => Oradb::Utils::Dbstructure["oracle structure ${version}"],
+            before => Exec["extract ${downloadDir}/${file1}"],
+          }
+
+          if ($file2 != ""){
+            exec { "Download $file2 from $mountPoint":
+              command => "/usr/bin/aws s3 cp ${mountPoint}${file2} ${downloadDir}/ && chown ${user}:${group} ${downloadDir}/${file2}",
+              creates => "${downloadDir}/${file2}",
+              timeout => 0,
+              require => Oradb::Utils::Dbstructure["oracle structure ${version}"],
+              before => Exec["extract ${downloadDir}/${file2}"],
+            }
+          }
         }
-        # db file 2 installer zip (if exists)
-        if ($file2 != ""){
-          file { "${downloadDir}/${file2}":
+        else {
+          # download from puppetmaster
+          file { "${downloadDir}/${file1}":
             ensure      => present,
-            source      => "${mountPoint}/${file2}",
+            source      => "${mountPoint}/${file1}",
             mode        => '0775',
             owner       => $user,
             group       => $group,
-            require     => File["${downloadDir}/${file1}"],
-            before      => Exec["extract ${downloadDir}/${file2}"]
+            require     => Oradb::Utils::Dbstructure["oracle structure ${version}"],
+            before      => Exec["extract ${downloadDir}/${file1}"],
+          }
+          # db file 2 installer zip (if exists)
+          if ($file2 != ""){
+            file { "${downloadDir}/${file2}":
+              ensure      => present,
+              source      => "${mountPoint}/${file2}",
+              mode        => '0775',
+              owner       => $user,
+              group       => $group,
+              require     => File["${downloadDir}/${file1}"],
+              before      => Exec["extract ${downloadDir}/${file2}"]
+            }
           }
         }
-        $source = $downloadDir
       } else {
+        # remoteFile == false
         $source = $mountPoint
       }
 
