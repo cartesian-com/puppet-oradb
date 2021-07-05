@@ -154,8 +154,17 @@ define oradb::installdb(
         $source = $mountPoint
       }
 
+      if ($version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4']) {
+        # 11/12 is extracted to the download dir
+        $unzip1 = "unzip -o ${source}/${file1} -d ${download_dir}/${file}"
+      }
+      elsif ($version == '19.3.0.0'){
+        # 19c is extracted to the final destination
+        $unzip1 = "unzip -o ${source}/${file1} -d ${oracle_home}"
+      }
+
       exec { "extract ${downloadDir}/${file1}":
-        command     => "unzip -o ${source}/${file1} -d ${downloadDir}/${file}",
+        command     => "${unzip1}",
         timeout     => 0,
         logoutput   => false,
         path        => $execPath,
@@ -165,6 +174,7 @@ define oradb::installdb(
         before      => Exec["install oracle database ${title}"],
       }
       if ($file2 != ""){
+        # only 11/12
         exec { "extract ${downloadDir}/${file2}":
           command     => "unzip -o ${source}/${file2} -d ${downloadDir}/${file}",
           timeout     => 0,
@@ -194,29 +204,35 @@ define oradb::installdb(
       }
     }
 
-    if ( $version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4','19.3.0.0']){
-      exec { "install oracle database ${title}":
-        command     => "/bin/sh -c 'unset DISPLAY;${downloadDir}/${file}/database/runInstaller -silent -waitforcompletion -ignoreSysPrereqs -ignorePrereq -responseFile ${downloadDir}/db_install_${version}.rsp'",
-        creates     => "${oracleHome}/dbs",
-        timeout     => 0,
-        returns     => [6,0],
-        path        => $execPath,
-        user        => $user,
-        group       => $group_install,
-        logoutput   => true,
-        require     => [Oradb::Utils::Dborainst["database orainst ${version}"],
-                        File["${downloadDir}/db_install_${version}.rsp"]],
-      }
+    if ($version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4']) {
+      $run_installer_command = "/bin/sh -c 'unset DISPLAY;${download_dir}/${file}/database/runInstaller -silent -waitforcompletion -ignoreSysPrereqs -ignorePrereq -responseFile ${download_dir}/db_install_${version}_${title}.rsp'"
+    }
+    elsif ($version == '19.3.0.0'){
+      $run_installer_command = "/bin/sh -c 'unset DISPLAY;cd ${oracle_home};./runInstaller -silent -waitforcompletion -ignorePrereq -responseFile ${download_dir}/db_install_${version}_${title}.rsp'"
+    }
 
-      file { $oracleHome:
-        ensure  => directory,
-        recurse => false,
-        replace => false,
-        mode    => '0775',
-        owner   => $user,
-        group   => $group_install,
-        require => Exec["install oracle database ${title}"],
-      }
+    exec { "install oracle database ${title}":
+      command     => "${run_installer_command}",
+      environment => ["USER=${user}","LOGNAME=${user}"],
+      cwd         => $oracleBase,
+      timeout     => 0,
+      returns     => [6,0],
+      path        => $execPath,
+      user        => $user,
+      group       => $group_install,
+      logoutput   => true,
+      require     => [Oradb::Utils::Dborainst["database orainst ${version}"],
+                      File["${downloadDir}/db_install_${version}.rsp"]],
+    }
+
+    file { $oracleHome:
+      ensure  => directory,
+      recurse => false,
+      replace => false,
+      mode    => '0775',
+      owner   => $user,
+      group   => $group_install,
+      require => Exec["install oracle database ${title}"],
     }
 
     if ( $bashProfile == true ) {
