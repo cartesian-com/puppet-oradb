@@ -1,9 +1,5 @@
 # == Class: oradb::database
-#
-#
-# action        =  createDatabase|deleteDatabase
-# databaseType  = MULTIPURPOSE|DATA_WAREHOUSING|OLTP
-#
+# databaseType  =
 define oradb::database(
   $oracleBase               = undef,
   $oracleHome               = undef,
@@ -24,7 +20,7 @@ define oradb::database(
   $sampleSchema             = TRUE,
   $memoryPercentage         = '40',
   $memoryTotal              = '800',
-  $databaseType             = 'MULTIPURPOSE',
+  $databaseType             = 'MULTIPURPOSE',  # MULTIPURPOSE|DATA_WAREHOUSING|OLTP
   $emConfiguration          = 'NONE',  # CENTRAL|LOCAL|ALL|NONE
   $storageType              = 'FS', #FS|CFS|ASM
   $asmSnmpPassword          = 'Welcome01',
@@ -37,11 +33,10 @@ define oradb::database(
   }
 
   if $action == 'create' {
+    # used in the DBCA template for 11/12
     $operationType = 'createDatabase'
-  } elsif $action == 'delete' {
-    $operationType = 'deleteDatabase'
   } else {
-    fail('Unrecognized database action')
+    fail('Unsupported database action')
   }
 
   if (!( $databaseType in ['MULTIPURPOSE','DATA_WAREHOUSING','OLTP'])) {
@@ -56,66 +51,55 @@ define oradb::database(
     fail('Unrecognized storageType')
   }
 
-  $continue = true
+  if ($::kernel != 'Linux') {
+    fail('Unsupported operating system')
+  }
 
-  if ( $continue ) {
-    case $::kernel {
-      'Linux', 'SunOS': {
-        $execPath    = "${oracleHome}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:"
-        $path        = $downloadDir
+  $execPath    = "${oracleHome}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:"
+  $path        = $downloadDir
 
-        Exec {
-          path        => $execPath,
-          user        => $user,
-          group       => $group,
-          environment => ["USER=${user}",],
-          logoutput   => true,
-        }
+  Exec {
+    path        => $execPath,
+    user        => $user,
+    group       => $group,
+    environment => ["USER=${user}",],
+    logoutput   => true,
+  }
 
-        File {
-          ensure     => present,
-          mode       => '0775',
-          owner      => $user,
-          group      => $group,
-        }
+  File {
+    ensure     => present,
+    mode       => '0775',
+    owner      => $user,
+    group      => $group,
+  }
 
-      }
-      default: {
-        fail('Unrecognized operating system')
-      }
+  $sanitized_title = regsubst($title, '[^a-zA-Z0-9.-]', '_', 'G')
+  $filename = "${path}/database_${sanitized_title}.rsp"
+
+  if $dbDomain {
+      $globalDbName = "${dbName}.${dbDomain}"
+  } else {
+      $globalDbName = $dbName
+  }
+
+  if ! defined(File[$filename]) {
+    file { $filename:
+      ensure       => present,
+      content      => template("oradb/dbca_${version}.rsp.erb"),
     }
+  }
 
-    $sanitized_title = regsubst($title, '[^a-zA-Z0-9.-]', '_', 'G')
+  if ($version == '19.3'){
+    $dbca_operation='-createDatabase'
+  }
+  else {
+    $dbca_operation=''
+  }
 
-    $filename = "${path}/database_${sanitized_title}.rsp"
-
-    if $dbDomain {
-        $globalDbName = "${dbName}.${dbDomain}"
-    } else {
-        $globalDbName = $dbName
-    }
-
-    if ! defined(File[$filename]) {
-      file { $filename:
-        ensure       => present,
-        content      => template("oradb/dbca_${version}.rsp.erb"),
-      }
-    }
-
-    if $action == 'create' {
-      exec { "install oracle database ${title}":
-        command      => "dbca -silent -responseFile ${filename}",
-        require      => File[$filename],
-        creates      => "${oracleBase}/admin/${dbName}",
-        timeout      => 0,
-      }
-    } elsif $action == 'delete' {
-      exec { "delete oracle database ${title}":
-        command      => "dbca -silent -responseFile ${filename}",
-        require      => File[$filename],
-        onlyif       => "ls ${oracleBase}/admin/${dbName}",
-        timeout      => 0,
-      }
-    }
+  exec { "install oracle database ${title}":
+    command      => "dbca -silent ${dbca_operation} -responseFile ${filename}",
+    require      => File[$filename],
+    creates      => "${oracleBase}/admin/${dbName}",
+    timeout      => 0,
   }
 }
