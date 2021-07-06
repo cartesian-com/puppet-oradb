@@ -160,7 +160,7 @@ define oradb::installdb(
       }
       elsif ($version == '19.3.0.0'){
         # 19c is extracted to the final destination
-        $unzip1 = "unzip -o ${source}/${file1} -d ${oracleHome}"
+        $unzip1 = "mkdir -p ${oracleHome} && unzip -o ${source}/${file1} -d ${oracleHome}"
       }
 
       exec { "extract ${downloadDir}/${file1}":
