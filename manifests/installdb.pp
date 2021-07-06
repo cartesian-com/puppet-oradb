@@ -205,10 +205,10 @@ define oradb::installdb(
     }
 
     if ($version in ['11.2.0.1','12.1.0.1','12.1.0.2','11.2.0.3','11.2.0.4']) {
-      $run_installer_command = "/bin/sh -c 'unset DISPLAY;${downloadDir}/${file}/database/runInstaller -silent -waitforcompletion -ignoreSysPrereqs -ignorePrereq -responseFile ${downloadDir}/db_install_${version}_${title}.rsp'"
+      $run_installer_command = "/bin/sh -c 'unset DISPLAY;${downloadDir}/${file}/database/runInstaller -silent -waitforcompletion -ignoreSysPrereqs -ignorePrereq -responseFile ${downloadDir}/db_install_${version}.rsp'"
     }
     elsif ($version == '19.3.0.0'){
-      $run_installer_command = "/bin/sh -c 'unset DISPLAY;cd ${oracleHome};./runInstaller -silent -waitforcompletion -ignorePrereq -responseFile ${downloadDir}/db_install_${version}_${title}.rsp'"
+      $run_installer_command = "/bin/sh -c 'unset DISPLAY;cd ${oracleHome};./runInstaller -silent -waitforcompletion -ignorePrereq -responseFile ${downloadDir}/db_install_${version}.rsp'"
     }
 
     exec { "install oracle database ${title}":
